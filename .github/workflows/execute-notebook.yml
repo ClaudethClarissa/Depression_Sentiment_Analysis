@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/execute-notebook.yml'
+      - 'Sentiment_Analysis_Tw.ipynb'
   workflow_dispatch:
 
 permissions:
