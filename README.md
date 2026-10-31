@@ -51,33 +51,19 @@ For each representation, the code selects the five most frequent sequences from 
 
 A `DecisionTreeClassifier(random_state=42)` is fitted to the binary features. The notebook reports **accuracy, a classification report, confusion matrices, and decision-tree visualizations** for each representation.
 
-## Results Recorded in the Notebook
+## Corrected Evaluation
 
-These figures are taken from the notebook's **saved outputs**. They have not been independently re-executed and, importantly, **they are not valid held-out performance estimates** for the reason explained below.
+The original notebook contained target leakage: it selected feature vocabularies independently on the test set using test labels. That issue has now been corrected in the main notebook:
 
-| Feature setting | Saved accuracy |
-|---|---:|
-| Unigrams | 96.90% |
-| Bigrams | 36.69% |
-| Trigrams | 78.09% |
+1. Split tweets 80/20 using the original fixed random seed.
+2. Learn five frequent n-grams from **each class in training data only**.
+3. Apply the **same ten training-defined features** to training and test tweets, without test labels.
+4. Use the same n-gram order in **both classes** for unigrams, bigrams, and trigrams.
+5. Fit three decision trees and calculate test accuracy, confusion matrices, precision, recall, and F1.
 
-The saved confusion matrices (rows = true label, columns = predicted label; class order 0, 1) are:
+The corrected notebook deliberately clears the previous output cells. **The original accuracies (96.90%, 36.69%, 78.09%) are invalid because of leakage and are not presented as current performance.** A GitHub Actions workflow executes the corrected notebook and stores an executed notebook artifact, so the metrics can be inspected after the workflow succeeds.
 
-| N-grams | TN | FP | FN | TP |
-|---|---:|---:|---:|---:|
-| 1 | 1,614 | 0 | 64 | 385 |
-| 2 | 481 | 1,133 | 173 | 276 |
-| 3 | 1,607 | 7 | 445 | 4 |
-
-**Interpreting the outputs:** the unigram result appears strongest by accuracy, but the apparent result cannot be used as evidence of a reliable classifier. The trigram confusion matrix, for example, shows that only **4 of 449** positive-class examples were identified in the saved run.
-
-### Critical evaluation limitation: target leakage
-
-The feature-construction function `from_tweets2features(X, Y, n)` selects the most frequent class-specific n-grams using both the provided messages **and their labels**. The notebook calls it *separately on training data and on test data*, passing `Yraw_test` into the test feature construction. Consequently, the test representation is influenced by the actual test labels. The features also represent different selected vocabularies in the training and test sets.
-
-**Therefore, the reported test accuracy and confusion matrices cannot be treated as unbiased generalization estimates.** The code is preserved as the original course analysis, and the recorded values are presented for historical inspection only, not as validated model performance.
-
-A sound follow-up would learn the vocabulary **exclusively from the training split**, apply exactly that fixed vocabulary to validation/test messages without their labels, and re-evaluate using stratified splits, cross-validation and appropriate class-sensitive metrics (precision, recall, F1 and balanced accuracy).
+The experiment still uses a simple frequency-selected feature representation and a single 80/20 holdout split. These are exploratory results, not clinical validation. The notebook also reports identical tweet texts shared across train and test, which may warrant a group-aware split if duplicates occur.
 
 ## Notebook & Project Structure
 
@@ -85,23 +71,24 @@ A sound follow-up would learn the vocabulary **exclusively from the training spl
 Depression_Sentiment_Analysis/
 ├── Sentiment_Analysis_Tw.ipynb  # Original feature engineering, model and results
 ├── sentiment_tweets3.csv       # Dataset used by the notebook
+├── .github/workflows/validate.yml # Automated notebook execution
 └── README.md                   # Project description and methodological notes
 ```
 
-The notebook uses **pandas, NumPy, matplotlib, scikit-learn and NLTK**. To explore the original code, install those packages, download the NLTK English stopwords corpus if needed, and open the notebook from the repository root. Because the original notebook has not been freshly executed in a clean environment, package compatibility is not guaranteed.
+The notebook uses **pandas, NumPy, matplotlib and scikit-learn**; the corrected version uses scikit-learn's built-in English stopword list instead of requiring a downloaded NLTK corpus. To explore the original code, install those packages, open the notebook from the repository root. The GitHub Actions workflow validates notebook execution in a clean Python environment.
 
 ## Ethical and Statistical Limitations
 
 - Language patterns in tweets cannot establish whether a person has depression; clinical diagnosis requires appropriate professional assessment.
 - The label definition and representativeness of the dataset are not documented here.
-- The training/test feature-generation process leaks label information and invalidates the apparent test performance.
-- The top-feature selection and substring-presence implementation can be sensitive to tokenization choices.
+- The earlier test-label leakage was fixed by learning vocabulary from training data only; old saved accuracy values must not be reused.
+- The simple tokenization, stopword filtering, and top-five feature selection can affect predictive performance.
 - Accuracy alone is especially misleading when classes are imbalanced; positive-class recall and precision matter.
 - The published CSV contains social-media text; any downstream reuse should respect privacy and dataset terms.
 
 ## Academic Context & Acknowledgment
 
-Developed as an assignment for **Network Analysis and Data Mining**, **University of Calgary**, under **Professor Emma Towlson**. The n-gram function in the notebook references an [Analytics Vidhya tutorial on n-grams](https://www.analyticsvidhya.com/blog/2021/09/what-are-n-grams-and-how-to-implement-them-in-python/).
+Developed as an assignment for **Network Analysis and Data Mining**, **University of Calgary**, under **Professor Emma Towlson**. The original n-gram function referenced an [Analytics Vidhya tutorial on n-grams](https://www.analyticsvidhya.com/blog/2021/09/what-are-n-grams-and-how-to-implement-them-in-python/).
 
 ---
 
