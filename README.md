@@ -61,7 +61,27 @@ The original notebook contained target leakage: it selected feature vocabularies
 4. Use the same n-gram order in **both classes** for unigrams, bigrams, and trigrams.
 5. Fit three decision trees and calculate test accuracy, confusion matrices, precision, recall, and F1.
 
-The corrected notebook deliberately clears the previous output cells. **The original accuracies (96.90%, 36.69%, 78.09%) are invalid because of leakage and are not presented as current performance.** A GitHub Actions workflow executes the corrected notebook and stores an executed notebook artifact, so the metrics can be inspected after the workflow succeeds.
+The corrected notebook deliberately clears the previous output cells. **The original accuracies (96.90%, 36.69%, 78.09%) are invalid because of leakage and are not presented as current performance.** A GitHub Actions workflow executes the corrected notebook and stores an executed notebook artifact for inspection.
+
+### Results from the executed, corrected notebook
+
+The automated run completed successfully with the original 80/20 split (2,063 test examples: 1,614 in class 0 and 449 in class 1).
+
+| Representation | Test accuracy | Class 1 precision | Class 1 recall | Class 1 F1 |
+|---|---:|---:|---:|---:|
+| Unigrams | 99.47% | 100% | 97.55% | 98.76% |
+| Bigrams | 84.49% | 100% | 28.73% | 44.64% |
+| Trigrams | 82.40% | 100% | 19.15% | 32.09% |
+
+Confusion matrices (rows = actual labels, columns = predictions; class 0 then class 1):
+
+| Representation | TN | FP | FN | TP |
+|---|---:|---:|---:|---:|
+| Unigrams | 1,614 | 0 | 11 | 438 |
+| Bigrams | 1,614 | 0 | 320 | 129 |
+| Trigrams | 1,614 | 0 | 363 | 86 |
+
+Results are from a [successful GitHub Actions notebook execution](https://github.com/ClaudethClarissa/Depression_Sentiment_Analysis/actions/runs/41234705361), **not** the invalid outputs of the original notebook. The unusually high unigram score merits additional checks for dataset artifacts and overly distinctive tokens before drawing generalization claims. The run identified **10 identical text values shared between training and test**; these may contribute to optimistic estimates and should be addressed in a future group-aware evaluation.
 
 The experiment still uses a simple frequency-selected feature representation and a single 80/20 holdout split. These are exploratory results, not clinical validation. The notebook also reports identical tweet texts shared across train and test, which may warrant a group-aware split if duplicates occur.
 
