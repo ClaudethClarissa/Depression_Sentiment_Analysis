@@ -23,8 +23,6 @@ jobs:
       - name: Install scientific Python dependencies
         run: python -m pip install notebook nbconvert ipykernel numpy pandas scikit-learn matplotlib
       - name: Execute notebook and retain outputs
-        env:
-          MPLBACKEND: Agg
         run: |
           jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=900 Sentiment_Analysis_Tw.ipynb
       - name: Commit executed notebook with figures
