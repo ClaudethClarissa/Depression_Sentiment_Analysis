@@ -81,7 +81,35 @@ Confusion matrices (rows = actual labels, columns = predictions; class 0 then cl
 | Bigrams | 1,614 | 0 | 320 | 129 |
 | Trigrams | 1,614 | 0 | 363 | 86 |
 
-Results are from a [successful GitHub Actions notebook execution](https://github.com/ClaudethClarissa/Depression_Sentiment_Analysis/actions/runs/41234705361), **not** the invalid outputs of the original notebook. The unusually high unigram score merits additional checks for dataset artifacts and overly distinctive tokens before drawing generalization claims. The run identified **10 identical text values shared between training and test**; these may contribute to optimistic estimates and should be addressed in a future group-aware evaluation.
+Results are from a [successful GitHub Actions notebook execution](https://github.com/ClaudethClarissa/Depression_Sentiment_Analysis/actions/runs/41234705361), **not** the invalid outputs of the original notebook. The unusually high unigram score is explained in large part by the word `depression`, which occurs in nearly all positive-class tweets and no negative-class tweets; see the ablation below. The run identified **10 identical text values shared between training and test**; these may contribute to optimistic estimates and should be addressed in a future group-aware evaluation.
+
+### Dataset audit: why the original accuracy was unusually high
+
+Inspecting the supplied 10,313-row dataset exposed a powerful **label-word shortcut**:
+
+| Dataset property | Label 0 | Label 1 |
+|---|---:|---:|
+| Tweets | 8,000 | 2,313 |
+| Tweets containing the word `depression` | 0 | 2,287 |
+| Proportion mentioning `depression` | 0.00% | 98.88% |
+
+As a result, a model can largely predict the **dataset's label** by detecting the literal word *depression*. This does not demonstrate that it recognizes depression in people or generalizable linguistic signs of depression.
+
+The notebook now contains an **ablation experiment** masking that exact word in both training and test text and repeating all three models:
+
+| Experiment | Accuracy | Label-1 recall | Label-1 TP / FN |
+|---|---:|---:|---:|
+| Unigrams, original text | 99.47% | 97.55% | 438 / 11 |
+| Unigrams, `depression` masked | **88.37%** | **47.44%** | 213 / 236 |
+| Bigrams, `depression` masked | 83.42% | 24.05% | 108 / 341 |
+| Trigrams, `depression` masked | 82.40% | 19.15% | 86 / 363 |
+| Masked unigrams, duplicate-grouped 80/20 split | **87.87%** | **44.19%** | 194 / 245 |
+
+The final experiment groups exact normalized tweet texts before splitting so that duplicate texts cannot appear in both partitions. The original split had 10 identical text values shared across training and test; the dataset overall also contains duplicate records. In the duplicate-grouped evaluation, the test set comprised 2,061 rows instead of 2,063.
+
+**Interpretation:** removing a single label-indicating word causes a large reduction in positive-class sensitivity. Even the masked results should be viewed as exploratory, since other labeling or sampling artifacts may remain. More rigorous dataset provenance assessment, held-out-source validation, and repeated group-aware splits would be needed before making performance or mental-health claims.
+
+The masked and grouped results were verified in the [automated notebook execution](https://github.com/ClaudethClarissa/Depression_Sentiment_Analysis/actions/runs/41236198512).
 
 The experiment still uses a simple frequency-selected feature representation and a single 80/20 holdout split. These are exploratory results, not clinical validation. The notebook also reports identical tweet texts shared across train and test, which may warrant a group-aware split if duplicates occur.
 
